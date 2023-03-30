@@ -6,9 +6,8 @@ SERVER_PORT = 5500
 BUFFER_SIZE = 1024
 PORT = 5501
 
-sending_file = True
-
 def main():
+    sending_file = True
     while sending_file:
         # O arquivo que será enviado é o test_file.txt
         if os.path.exists("test_file.txt"):
