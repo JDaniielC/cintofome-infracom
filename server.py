@@ -35,7 +35,7 @@ def main():
         udp_server.sendto(data, (HOST, 5501))
         print("Parte enviada para o cliente.")
         data = file_to_send.read(1024)
-    # Como no servidor está esperando um arquivo vazio para sair do loop:
+    # Como o cliente está esperando um arquivo vazio para sair do loop:
     udp_server.sendto(data, (HOST, 5501))
 
     file_to_send.close()
