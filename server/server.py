@@ -13,7 +13,9 @@ def main():
 
         # Com intuito de criar o mesmo arquivo no servidor:
         filename = servidor.rdt_rcv()['data'].decode()
-        print(filename)
+
+        # Para que evite erros (abrir o mesmo arquivo do cliente)
+        filename = 'server_' + filename[0:]
         
         # Abrimos o arquivo para escrever os dados recebidos
         with open(filename, "wb") as file:
