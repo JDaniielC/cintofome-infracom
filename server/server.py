@@ -94,6 +94,7 @@ def main():
         clientMessage = servidor.rdt_rcv()['data']
 
         if (clientMessage.decode('utf-8') == 'chefia'):
+            tableNumber = 'Recebe número.'
             # Verificar se a mensagem foi um número:
             while (tableNumber != isDigit()):
                 servidor.rdt_send('Digite sua mesa'.encode('utf-8'))
