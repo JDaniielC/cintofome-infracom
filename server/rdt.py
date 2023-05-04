@@ -62,10 +62,8 @@ class Rdt:
             # Inicia o timeout do socket e envia o pacote:
             self.socket.settimeout(1)
             self.send(payload)  
-            print('pacote enviado\n')
 
             try:
-                print('esperando pelo ack...\n')
                 # Tenta receber o ACK usando o método `rdt_rcv`
                 rcvpkt = self.rdt_rcv('wait_ack')  
             except:
@@ -74,7 +72,6 @@ class Rdt:
             else: 
                 # Se não entrar no except, remove o timeout do socket:
                 self.socket.settimeout(None)  
-                print('pacote recebido corretamente\n')
                 break
 
         self.sec_client = 1 - self.sec_client  # Atualiza o número de sequência para o próximo pacote a ser enviado
@@ -89,11 +86,9 @@ class Rdt:
             # Enquanto não houver recebido um pacote válido.
             while(not rcvpkt or corrupt(rcvpkt) or rcvpkt['num_seq'] != self.sec_server):
                 rcvpkt = eval(self.receive().decode()) ## Decodifica os bytes
-            print('pacote recebido.\n')
 
             ack_data = make_ack(self.sec_server)  
             self.send(ack_data)  
-            print('ack enviado...\n')
 
             # Atualiza o número de sequência para o próximo pacote a ser recebido
             self.sec_server = 1 - self.sec_server  
@@ -104,7 +99,6 @@ class Rdt:
             # Enquanto não houver recebido um pacote válido.
             while(not rcvpkt or corrupt(rcvpkt) or rcvpkt['num_seq'] != self.sec_client):
                 rcvpkt = eval(self.receive().decode())  ## Decodifica os bytes
-            print('ack recebido.\n')
 
         # Retorna o pacote recebido (ou o pacote de confirmação recebido)
         return rcvpkt  
