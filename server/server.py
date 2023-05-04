@@ -74,13 +74,6 @@ def save_request(mesa, nome, pedido):
         mesa[nome].append(pedido)
         print(f"Pedido {pedido} adicionado para {nome} na mesa.")
 
-def isDigit(value):
-    try:
-        int(value)
-        return True
-    except ValueError:
-        return False
-
 def main():
     # Conexão foi abstraída para a classe Rdt
     servidor = Rdt('server')
@@ -97,7 +90,7 @@ def main():
             tableNumber = 'Recebe número.'
             print("Aguardando número do usuário.")
             # Verificar se a mensagem foi um número:
-            while (isDigit(tableNumber)):
+            while (not tableNumber.isdigit()):
                 servidor.rdt_send('Digite sua mesa'.encode('utf-8'))
                 clientMessage = servidor.rdt_rcv()['data']
                 tableNumber = clientMessage.decode('utf-8')
@@ -107,11 +100,13 @@ def main():
             name = clientMessage.decode('utf-8')
 
             if (mesas.get(tableNumber) == None):
-                mesas.append({tableNumber: {name: []}})
-            else:
-                mesas[tableNumber].append({name: []})
+                mesas[tableNumber] = {name: []}
+                print("Mesa criada, usuário adicionado à mesa.")
+            elif (mesas.get(tableNumber).get(name) == None):
+                mesas[tableNumber][name] = []
+                print("Usuário adicionado à mesa.")
 
-            print("Mesa criada, usuário adicionado.")
+            print("Cadastro finalizado")
             while (True):
                 servidor.rdt_send(opcoes.encode('utf-8'))
                 clientMessage = servidor.rdt_rcv()['data']
@@ -119,7 +114,7 @@ def main():
 
                 table = mesas.get(tableNumber)
 
-                if (options in respostasPorExtenso or (isDigit(options) and int(options) in range(1, 7))):
+                if (options in respostasPorExtenso or (options.isdigit() and int(options) in range(1, 7))):
                     match(options):
                         case 'sair' | 'levantar' | '6':
                             print("Decidiu sair, verificando se pode sair...")
@@ -136,13 +131,14 @@ def main():
                             clientMessage = servidor.rdt_rcv()['data']
 
                         case 'pedido' | 'pedir' | '2':
-                            servidor.rdt_send('Digite qual o primeiro item que gostaria (número ou por extenso)'.encode('utf-8'))
+                            servidor.rdt_send('Digite qual o primeiro item que gostaria (número ou por extenso)\
+                                              {}'.format(cardapio).encode('utf-8'))
                             clientMessage = servidor.rdt_rcv()['data']
                             item = clientMessage.decode('utf-8')
 
                             print("Aguardando pedido existente...")
 
-                            while (item in cardapioPorExtenso or (isDigit(item) and int(item) in range(0, 10)) or (item not in negacoes)):
+                            while (item in cardapioPorExtenso or (item.isdigit() and int(item) in range(0, 10)) or (item not in negacoes)):
                                 save_request(item, mesas.get(tableNumber), name)
 
                                 servidor.rdt_send('Gostaria de mais algum item? (número ou por extenso)'.encode('utf-8'))

@@ -93,8 +93,6 @@ class Rdt:
             # Atualiza o número de sequência para o próximo pacote a ser recebido
             self.sec_server = 1 - self.sec_server  
         else:
-            print('esperando por um ack\n')
-
             rcvpkt = None
             # Enquanto não houver recebido um pacote válido.
             while(not rcvpkt or corrupt(rcvpkt) or rcvpkt['num_seq'] != self.sec_client):
