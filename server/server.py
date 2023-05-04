@@ -95,6 +95,7 @@ def main():
 
         if (clientMessage.decode('utf-8') == 'chefia'):
             tableNumber = 'Recebe número.'
+            print("Aguardando número do usuário.")
             # Verificar se a mensagem foi um número:
             while (isDigit(tableNumber)):
                 servidor.rdt_send('Digite sua mesa'.encode('utf-8'))
@@ -110,6 +111,7 @@ def main():
             else:
                 mesas[tableNumber].append({name: []})
 
+            print("Mesa criada, usuário adicionado.")
             while (True):
                 servidor.rdt_send(opcoes.encode('utf-8'))
                 clientMessage = servidor.rdt_rcv()['data']
@@ -120,6 +122,7 @@ def main():
                 if (options in respostasPorExtenso or (isDigit(options) and int(options) in range(1, 7))):
                     match(options):
                         case 'sair' | 'levantar' | '6':
+                            print("Decidiu sair, verificando se pode sair...")
                             money, result = bill_verify(0, table, name)
                             if (result):
                                 servidor.rdt_send('Volte sempre ^^'.encode('utf-8'))
@@ -128,6 +131,7 @@ def main():
                             else: 
                                 servidor.rdt_send('Você ainda não pagou sua conta'.encode('utf-8'))
                         case 'cardapio' | '1':
+                            print("Enviando cardápio...")
                             servidor.rdt_send(cardapio.encode('utf-8'))
                             clientMessage = servidor.rdt_rcv()['data']
 
@@ -135,6 +139,8 @@ def main():
                             servidor.rdt_send('Digite qual o primeiro item que gostaria (número ou por extenso)'.encode('utf-8'))
                             clientMessage = servidor.rdt_rcv()['data']
                             item = clientMessage.decode('utf-8')
+
+                            print("Aguardando pedido existente...")
 
                             while (item in cardapioPorExtenso or (isDigit(item) and int(item) in range(0, 10)) or (item not in negacoes)):
                                 save_request(item, mesas.get(tableNumber), name)
@@ -146,9 +152,11 @@ def main():
                             servidor.rdt_send('Pedido finalizado'.encode('utf-8'))
 
                         case 'conta individual' | '3':
+                            print("Enviando conta individual...")
                             servidor.rdt_send(individual_bill(table, name).encode('utf-8'))
 
                         case 'conta da mesa' | '4':
+                            print("Enviando conta da mesa...")
                             servidor.rdt_send(table_bill(table).encode('utf-8'))
                         
                         case 'pagar' | '5':
@@ -162,6 +170,8 @@ def main():
                             value = clientMessage.decode('utf-8')
 
                             money, result = bill_verify(value, table, name)
+
+                            print("Verificando se o pagamento foi efetuado...")
 
                             if (result):
                                 if (money > 0):
