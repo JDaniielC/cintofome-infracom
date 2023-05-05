@@ -80,10 +80,9 @@ def main():
     servidor = Rdt('server')
     # No qual fornece uma conexão UDT com os príncipios de RDT3.0
 
+    print('Conexão estabelecida com o cliente')
+    servidor.reset_num_seq()
     while True:
-        print('Conexão estabelecida com o cliente')
-        servidor.reset_num_seq()
-
         # Recebe uma mensagem do cliente
         clientMessage = servidor.rdt_rcv()['data']
 
@@ -111,6 +110,7 @@ def main():
             while (True):
                 servidor.rdt_send(opcoes.encode('utf-8'))
                 clientMessage = servidor.rdt_rcv()['data']
+                print(clientMessage)
                 options = clientMessage.decode('utf-8')
 
                 table = mesas.get(tableNumber)
@@ -125,7 +125,8 @@ def main():
                                 mesas[tableNumber].update(table)
                                 break
                             else: 
-                                servidor.rdt_send('Você ainda não pagou sua conta'.encode('utf-8'))
+                                servidor.rdt_send('Você ainda não pagou sua conta.\nEnvie Ok para continuar'.encode('utf-8'))
+                                clientMessage = servidor.rdt_rcv()['data']
                         case 'cardapio' | '1':
                             print("Enviando cardápio...")
                             servidor.rdt_send(cardapio.encode('utf-8'))
@@ -148,15 +149,18 @@ def main():
                             
                             print("Passou")
 
-                            servidor.rdt_send('Pedido finalizado'.encode('utf-8'))
+                            servidor.rdt_send('Pedido finalizado.\nEnvie Ok para continuar'.encode('utf-8'))
+                            clientMessage = servidor.rdt_rcv()['data']
 
                         case 'conta individual' | '3':
                             print("Enviando conta individual...")
-                            servidor.rdt_send(individual_bill(table, name).encode('utf-8'))
+                            servidor.rdt_send('{}\nEnvie Ok para continuar.'.format(individual_bill(table, name)).encode('utf-8'))
+                            servidor.rdt_rcv()['data']
 
                         case 'conta da mesa' | '4':
                             print("Enviando conta da mesa...")
-                            servidor.rdt_send(table_bill(table).encode('utf-8'))
+                            servidor.rdt_send('{}\nEnvie Ok para continuar.'.format(table_bill(table)).encode('utf-8'))
+                            servidor.rdt_rcv()['data']
                         
                         case 'pagar' | '5':
                             total_individual = sum(cardapio[p] for p in table[name])
@@ -182,11 +186,13 @@ def main():
                                 clientMessage = servidor.rdt_rcv()['data']
                                 confirm = clientMessage.decode('utf-8')
                                 if (confirm in negacoes):
-                                    servidor.rdt_send('Pagamento cancelado'.encode('utf-8'))
+                                    servidor.rdt_send('Pagamento cancelado.\nEnvie Ok para continuar.'.encode('utf-8'))
+                                    servidor.rdt_rcv()['data']
                                 else:
-                                    servidor.rdt_send('Você pagou sua conta, obrigado!'.encode('utf-8'))
+                                    servidor.rdt_send('Você pagou sua conta, obrigado!\nEnvie Ok para continuar'.encode('utf-8'))
+                                    servidor.rdt_rcv()['data']
                             else:
-                                servidor.rdt_send(f"Você ainda deve R$ {money:.2f}".encode('utf-8'))
+                                servidor.rdt_send(f"Você ainda deve R$ {money:.2f}.\nEnvie Ok para continuar".encode('utf-8'))
         else:
             servidor.rdt_send('Seja bem vindo ao CINtofome!\nDigite "chefia" para iniciar o sistema'.encode('utf-8'))
 # ----------------------------------------------------- #
