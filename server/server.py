@@ -41,28 +41,30 @@ def table_bill(mesa):
 
 def individual_bill(mesa, nome):
     total = 0
-    pedidos = mesa.get(nome, [])
-    
+    pedidos = mesa[nome]
     if not pedidos:
         return "Não foram encontrados pedidos para este cliente."
     
     linha = f"| {nome} |\n"
     for pedido in pedidos:
-        preco = cardapioDict.get(pedido, 0)
-        linha += f"{pedido} => R$ {preco:.2f}\n"
-        total += preco
+        preco = cardapioDict.get(pedido)
+        if (preco is not None):
+            linha += "{} => R$ {}\n".format(pedido, preco)
+            total += preco
     
     linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-"
-    linha += f"\nTotal - R$ {total:.2f}\n"
+    linha += f"\nTotal - R$ {total}\n"
     linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-"
     
     return linha
 
-def bill_verify(valor, mesa, nome):
+def bill_verify(valor, mesa, nome): 
     total = 0
     pedidos = mesa[nome]
     for pedido in pedidos:
-        total += cardapioDict[pedido]
+        preco = cardapioDict.get(pedido)
+        if (preco is not None):
+            total += preco
     if (valor >= total):
         mesa.pop(nome)
         return valor - total, True
@@ -75,6 +77,26 @@ def save_request(mesa: dict, nome: str, pedido: str):
     mesa[nome].append(pedido)
     print(f"Pedido {pedido} adicionado para {nome} na mesa.")
 
+def sum_bill(nome, mesa):
+    total_individual = 0.0
+    total_mesa = 0.0
+    for name, requests in mesa.items():
+        total_cliente = 0.0
+        for item in requests:
+            preco = cardapioDict.get(item)
+            if preco is not None:
+                total_cliente += preco
+
+        total_mesa += total_cliente
+    
+    pedidos = mesa[nome]
+    for pedido in pedidos:
+        preco = cardapioDict.get(pedido)
+        if preco is not None:
+            total_individual += preco
+    
+    return f"Sua conta foi R$ {total_individual:.2f} e a da mesa R$ {total_mesa:.2f}. Digite o valor que deseja pagar"
+                         
 def main():
     # Conexão foi abstraída para a classe Rdt
     servidor = Rdt('server')
@@ -123,9 +145,10 @@ def main():
                             if (result):
                                 servidor.rdt_send('Volte sempre ^^'.encode('utf-8'))
                                 mesas[tableNumber].update(table)
+                                clientMessage = servidor.rdt_rcv()['data']
                                 break
                             else: 
-                                servidor.rdt_send('Você ainda não pagou sua conta.\nEnvie Ok para continuar'.encode('utf-8'))
+                                servidor.rdt_send('Você ainda não pagou sua conta.\nAperte enter para continuar'.encode('utf-8'))
                                 clientMessage = servidor.rdt_rcv()['data']
                         case 'cardapio' | '1':
                             print("Enviando cardápio...")
@@ -147,32 +170,30 @@ def main():
                                 clientMessage = servidor.rdt_rcv()['data']
                                 item = clientMessage.decode('utf-8')
                             
-                            print("Passou")
-
-                            servidor.rdt_send('Pedido finalizado.\nEnvie Ok para continuar'.encode('utf-8'))
+                            servidor.rdt_send('Aperte enter para continuar'.encode('utf-8'))
                             clientMessage = servidor.rdt_rcv()['data']
 
                         case 'conta individual' | '3':
                             print("Enviando conta individual...")
-                            servidor.rdt_send('{}\nEnvie Ok para continuar.'.format(individual_bill(table, name)).encode('utf-8'))
+                            servidor.rdt_send('{}\nAperte enter para continuar.'.format(individual_bill(table, name)).encode('utf-8'))
                             servidor.rdt_rcv()['data']
 
                         case 'conta da mesa' | '4':
                             print("Enviando conta da mesa...")
-                            servidor.rdt_send('{}\nEnvie Ok para continuar.'.format(table_bill(table)).encode('utf-8'))
+                            servidor.rdt_send('{}\nAperte enter para continuar.'.format(table_bill(table)).encode('utf-8'))
                             servidor.rdt_rcv()['data']
                         
                         case 'pagar' | '5':
-                            total_individual = sum(cardapio[p] for p in table[name])
-                            total_mesa = sum(cardapio[p] for pedidos in table.values() for p in pedidos)
-
-                            bill = f"Sua conta foi R$ {total_individual:.2f} e a da mesa R$ {total_mesa:.2f}. Digite o valor que deseja pagar"
-                            
+                            bill = sum_bill(name, table)
                             servidor.rdt_send(bill.encode('utf-8'))
                             clientMessage = servidor.rdt_rcv()['data']
                             value = clientMessage.decode('utf-8')
 
-                            money, result = bill_verify(value, table, name)
+                            if (value.isdigit()):
+                                money, result = bill_verify(int(value), table, name)
+                            else:
+                                print("Valor inválido.")
+                                money, result = bill_verify(0, table, name)
 
                             print("Verificando se o pagamento foi efetuado...")
 
@@ -186,13 +207,13 @@ def main():
                                 clientMessage = servidor.rdt_rcv()['data']
                                 confirm = clientMessage.decode('utf-8')
                                 if (confirm in negacoes):
-                                    servidor.rdt_send('Pagamento cancelado.\nEnvie Ok para continuar.'.encode('utf-8'))
+                                    servidor.rdt_send('Pagamento cancelado.\nAperte enter para continuar.'.encode('utf-8'))
                                     servidor.rdt_rcv()['data']
                                 else:
-                                    servidor.rdt_send('Você pagou sua conta, obrigado!\nEnvie Ok para continuar'.encode('utf-8'))
+                                    servidor.rdt_send('Você pagou sua conta, obrigado!\nAperte enter para continuar'.encode('utf-8'))
                                     servidor.rdt_rcv()['data']
                             else:
-                                servidor.rdt_send(f"Você ainda deve R$ {money:.2f}.\nEnvie Ok para continuar".encode('utf-8'))
+                                servidor.rdt_send(f"Você ainda deve R$ {money:.2f}.\nAperte enter para continuar".encode('utf-8'))
         else:
             servidor.rdt_send('Seja bem vindo ao CINtofome!\nDigite "chefia" para iniciar o sistema'.encode('utf-8'))
 # ----------------------------------------------------- #
