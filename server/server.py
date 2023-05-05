@@ -63,19 +63,20 @@ def individual_bill(mesa, nome):
 def bill_verify(valor, mesa, nome): 
     total = 0
     pedidos = mesa.get(nome)
-    for pedido in pedidos:
-        preco = cardapioDict.get(pedido)
-        if (preco is not None):
-            total += preco
+    if pedidos is not None:
+        for pedido in pedidos:
+            preco = cardapioDict.get(pedido)
+            if (preco is not None):
+                total += preco
     if (valor >= total):
-        mesa.pop(nome)
         return valor - total, True
     else:
         return total - valor, False
 
 def save_request(mesa: dict, nome: str, pedido: str):
-    if (pedido.isdigit() & int(pedido) in range(0, 10)):
-        pedido = cardapioPorExtenso[int(pedido)]
+    if (pedido.isdigit()):
+        if (int(pedido) in range(0, 10)):
+            pedido = cardapioPorExtenso[int(pedido)]
     pedidos = mesa.get(nome)
     pedidos.append(pedido)
     print(f"Pedido {pedido} adicionado para {nome} na mesa.")
@@ -135,7 +136,9 @@ def main():
             while (True):
                 servidor.rdt_send(opcoes.encode('utf-8'))
                 clientMessage = servidor.rdt_rcv()['data']
-                print(clientMessage)
+                if (clientMessage == 'ACK'):
+                    print("Erro ao enviar opções.")
+                    continue
                 options = clientMessage.decode('utf-8')
 
                 table = mesas.get(tableNumber)
@@ -192,6 +195,8 @@ def main():
                             clientMessage = servidor.rdt_rcv()['data']
                             value = clientMessage.decode('utf-8')
 
+                            result = False
+
                             if (value.isdigit()):
                                 money, result = bill_verify(int(value), table, name)
                             else:
@@ -211,12 +216,13 @@ def main():
                                 confirm = clientMessage.decode('utf-8')
                                 if (confirm in negacoes):
                                     servidor.rdt_send('Pagamento cancelado.\nAperte enter para continuar.'.encode('utf-8'))
-                                    servidor.rdt_rcv()['data']
+                                    servidor.rdt_rcv()
                                 else:
                                     servidor.rdt_send('Você pagou sua conta, obrigado!\nAperte enter para continuar'.encode('utf-8'))
-                                    servidor.rdt_rcv()['data']
+                                    servidor.rdt_rcv()
                             else:
                                 servidor.rdt_send(f"Você ainda deve R$ {money:.2f}.\nAperte enter para continuar".encode('utf-8'))
+                                servidor.rdt_rcv()
         else:
             servidor.rdt_send('Seja bem vindo ao CINtofome!\nDigite "chefia" para iniciar o sistema'.encode('utf-8'))
 # ----------------------------------------------------- #
