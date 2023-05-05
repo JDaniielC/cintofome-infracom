@@ -1,6 +1,6 @@
 from rdt import *
 
-cardapio = {"Churrasco Misto": 45.00, "Parmegiana": 20.00, "Filé Mignon": 30,\
+cardapioDict = {"Churrasco Misto": 45.00, "Parmegiana": 20.00, "Filé Mignon": 30,\
              "Risoto de Camarão": 25, "Salmão Grelhado": 35, "Feijoada": 18, \
                 "Lasanha": 22, "Picanha": 40, "Espaguete à Carbonara": 28, "Pizza Margherita": 25}
 
@@ -22,7 +22,7 @@ def table_bill(mesa):
         # itera pelos itens pedidos pelo cliente e calcula o total da conta dele
         total_cliente = 0.0
         for item in pedidos:
-            preco = cardapio.get(item)
+            preco = cardapioDict.get(item)
             if preco is not None:
                 saida += "{:<20}{:>10.2f}\n".format(item, preco)
                 total_cliente += preco
@@ -48,7 +48,7 @@ def individual_bill(mesa, nome):
     
     linha = f"| {nome} |\n"
     for pedido in pedidos:
-        preco = cardapio.get(pedido, 0)
+        preco = cardapioDict.get(pedido, 0)
         linha += f"{pedido} => R$ {preco:.2f}\n"
         total += preco
     
@@ -62,7 +62,7 @@ def bill_verify(valor, mesa, nome):
     total = 0
     pedidos = mesa[nome]
     for pedido in pedidos:
-        total += cardapio[pedido]
+        total += cardapioDict[pedido]
     if (valor >= total):
         mesa.pop(nome)
         return valor - total, True
