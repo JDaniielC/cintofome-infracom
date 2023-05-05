@@ -69,10 +69,11 @@ def bill_verify(valor, mesa, nome):
     else:
         return total - valor, False
 
-def save_request(mesa, nome, pedido):
-    if nome in mesa:
-        mesa[nome].append(pedido)
-        print(f"Pedido {pedido} adicionado para {nome} na mesa.")
+def save_request(mesa: dict, nome: str, pedido: str):
+    if (pedido.isdigit() & int(pedido) in range(0, 10)):
+        pedido = cardapioPorExtenso[int(pedido)]
+    mesa[nome].append(pedido)
+    print(f"Pedido {pedido} adicionado para {nome} na mesa.")
 
 def main():
     # Conexão foi abstraída para a classe Rdt
@@ -121,7 +122,7 @@ def main():
                             money, result = bill_verify(0, table, name)
                             if (result):
                                 servidor.rdt_send('Volte sempre ^^'.encode('utf-8'))
-                                mesas.get(tableNumber).update(table)
+                                mesas[tableNumber].update(table)
                                 break
                             else: 
                                 servidor.rdt_send('Você ainda não pagou sua conta'.encode('utf-8'))
@@ -138,12 +139,14 @@ def main():
 
                             print("Aguardando pedido existente...")
 
-                            while (item in cardapioPorExtenso or (item.isdigit() and int(item) in range(0, 10)) or (item not in negacoes)):
-                                save_request(item, mesas.get(tableNumber), name)
+                            while (item in cardapioPorExtenso or (item.isdigit() and int(item) in range(0, 10))):
+                                save_request(table, name, item)
 
                                 servidor.rdt_send('Gostaria de mais algum item? (número ou por extenso)'.encode('utf-8'))
                                 clientMessage = servidor.rdt_rcv()['data']
                                 item = clientMessage.decode('utf-8')
+                            
+                            print("Passou")
 
                             servidor.rdt_send('Pedido finalizado'.encode('utf-8'))
 
@@ -184,6 +187,8 @@ def main():
                                     servidor.rdt_send('Você pagou sua conta, obrigado!'.encode('utf-8'))
                             else:
                                 servidor.rdt_send(f"Você ainda deve R$ {money:.2f}".encode('utf-8'))
+        else:
+            servidor.rdt_send('Seja bem vindo ao CINtofome!\nDigite "chefia" para iniciar o sistema'.encode('utf-8'))
 # ----------------------------------------------------- #
 #  Textos que serão enviados ao cliente ou verificações #
 # ----------------------------------------------------- #
@@ -208,8 +213,7 @@ cardapio = "Cardápio do CINtofome:\n\n\
             6 - Lasanha: R$ 22,00\n\
             7 - Picanha: R$ 40,00\n\
             8 - Espaguete à Carbonara: R$ 28,00\n\
-            9- Pizza Margherita: R$ 25,00\n\
-            Digite 'pedir' para fazer o pedido ou qualquer outra coisa para voltar as opções\n"
+            9- Pizza Margherita: R$ 25,00\n"
 
 cardapioPorExtenso = ['churrasco misto', 'parmegiana', 'filé mignon',\
                        'risoto de camarão', 'salmão grelhado', 'feijoada',\
