@@ -1,10 +1,10 @@
 from rdt import *
 
-cardapioDict = {"Churrasco Misto": 45.00, "Parmegiana": 20.00, "Filé Mignon": 30,\
-             "Risoto de Camarão": 25, "Salmão Grelhado": 35, "Feijoada": 18, \
-                "Lasanha": 22, "Picanha": 40, "Espaguete à Carbonara": 28, "Pizza Margherita": 25}
+cardapioDict = {"churrasco misto": 45.00, "parmegiana": 20.00, "filé Mignon": 30,\
+             "risoto de camarão": 25, "salmão grelhado": 35, "feijoada": 18, \
+                "lasanha": 22, "picanha": 40, "espaguete à carbonara": 28, "pizza margherita": 25}
 
-mesas = {"1": {"Vítor Azevedo": ["Parmegiana"], "Felipe Maltez": ["Lasanha"]}}
+mesas = {"1": {"Vítor Azevedo": ["parmegiana", 'feijoada'], "Felipe Maltez": ["lasanha", 'picanha']}}
 
 def table_bill(mesa):
     total_mesa = 0.0 # variável para armazenar o total da mesa
@@ -41,13 +41,15 @@ def table_bill(mesa):
 
 def individual_bill(mesa, nome):
     total = 0
-    pedidos = mesa[nome]
+    pedidos = mesa.get(nome)
     if not pedidos:
         return "Não foram encontrados pedidos para este cliente."
     
     linha = f"| {nome} |\n"
     for pedido in pedidos:
+        print(pedido)
         preco = cardapioDict.get(pedido)
+        print(preco)
         if (preco is not None):
             linha += "{} => R$ {}\n".format(pedido, preco)
             total += preco
@@ -60,7 +62,7 @@ def individual_bill(mesa, nome):
 
 def bill_verify(valor, mesa, nome): 
     total = 0
-    pedidos = mesa[nome]
+    pedidos = mesa.get(nome)
     for pedido in pedidos:
         preco = cardapioDict.get(pedido)
         if (preco is not None):
@@ -74,7 +76,8 @@ def bill_verify(valor, mesa, nome):
 def save_request(mesa: dict, nome: str, pedido: str):
     if (pedido.isdigit() & int(pedido) in range(0, 10)):
         pedido = cardapioPorExtenso[int(pedido)]
-    mesa[nome].append(pedido)
+    pedidos = mesa.get(nome)
+    pedidos.append(pedido)
     print(f"Pedido {pedido} adicionado para {nome} na mesa.")
 
 def sum_bill(nome, mesa):
@@ -89,7 +92,7 @@ def sum_bill(nome, mesa):
 
         total_mesa += total_cliente
     
-    pedidos = mesa[nome]
+    pedidos = mesa.get(nome)
     for pedido in pedidos:
         preco = cardapioDict.get(pedido)
         if preco is not None:
