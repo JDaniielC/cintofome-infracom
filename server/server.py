@@ -1,37 +1,44 @@
 from rdt import *
 
-cardapioDict = {"churrasco misto": 45.00, "parmegiana": 20.00, "filé Mignon": 30,\
+cardapioDict = {"churrasco misto": 45.00, "parmegiana": 20.00, "fil Mignon": 30,\
              "risoto de camarão": 25, "salmão grelhado": 35, "feijoada": 18, \
                 "lasanha": 22, "picanha": 40, "espaguete à carbonara": 28, "pizza margherita": 25}
 
 mesas = {"1": {"Vítor Azevedo": ["parmegiana", 'feijoada'], "Felipe Maltez": ["lasanha", 'picanha']}}
+pagamentos = {}
 
-def table_bill(mesa):
+
+def individual_bill(pedidos):
+    total = 0
+    linha = "Conta individual:\n"
+    linha += "{:<20}{:>10}\n".format("Item", "Preço")
+    linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
+    for pedido in pedidos:
+        preco = cardapioDict.get(pedido)
+        if preco is not None:
+            linha += "{:<20}{:>10.2f}\n".format(pedido, preco)
+            total += preco
+
+    linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
+    linha += "Total - R$ {:,.2f}\n".format(total)
+    linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
+    return linha
+
+def table_bill(pedidos):
     total_mesa = 0.0 # variável para armazenar o total da mesa
     
-    # cabeçalho da conta
-    saida = "\n"
-    for nome_cliente in mesa:
-        saida += "| {} |\n\n".format(nome_cliente)
-    
-    # itera pelos pedidos de cada cliente
-    for nome_cliente, pedidos in mesa.items():
+    saida = "Conta da mesa:\n\n"
+    for nome_cliente, lista_pedidos in pedidos.items():
+        saida += f"{nome_cliente}:\n"
         saida += "{:<20}{:>10}\n".format("Item", "Preço")
         saida += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
-        
-        # itera pelos itens pedidos pelo cliente e calcula o total da conta dele
-        total_cliente = 0.0
-        for item in pedidos:
-            preco = cardapioDict.get(item)
+        for pedido in lista_pedidos:
+            preco = cardapioDict.get(pedido)
             if preco is not None:
-                saida += "{:<20}{:>10.2f}\n".format(item, preco)
-                total_cliente += preco
-        saida += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
+                saida += "{:<20}{:>10.2f}\n".format(pedido, preco)
+                total_mesa += preco
         
-        # adiciona o total do cliente ao total da mesa
-        saida += "Total - R$ {:,.2f}\n".format(total_cliente)
-        saida += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n\n"
-        total_mesa += total_cliente
+        saida += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
     
     # total da mesa
     saida += "Total da mesa - R$ {:,.2f}\n".format(total_mesa)
@@ -39,26 +46,7 @@ def table_bill(mesa):
     
     return saida
 
-def individual_bill(mesa, nome):
-    total = 0
-    pedidos = mesa.get(nome)
-    if not pedidos:
-        return "Não foram encontrados pedidos para este cliente."
-    
-    linha = f"| {nome} |\n"
-    for pedido in pedidos:
-        print(pedido)
-        preco = cardapioDict.get(pedido)
-        print(preco)
-        if (preco is not None):
-            linha += "{} => R$ {}\n".format(pedido, preco)
-            total += preco
-    
-    linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-"
-    linha += f"\nTotal - R$ {total}\n"
-    linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-"
-    
-    return linha
+
 
 def bill_verify(valor, mesa, nome): 
     total = 0
@@ -147,8 +135,7 @@ def main():
                     match(options):
                         case 'sair' | 'levantar' | '6':
                             print("Decidiu sair, verificando se pode sair...")
-                            money, result = bill_verify(0, table, name)
-                            if (result):
+                            if name in pagamentos:  # Verifique se o cliente já pagou a conta
                                 servidor.rdt_send('Volte sempre ^^'.encode('utf-8'))
                                 mesas[tableNumber].update(table)
                                 clientMessage = servidor.rdt_rcv()['data']
@@ -181,8 +168,9 @@ def main():
 
                         case 'conta individual' | '3':
                             print("Enviando conta individual...")
-                            servidor.rdt_send('{}\nAperte enter para continuar.'.format(individual_bill(table, name)).encode('utf-8'))
+                            servidor.rdt_send('{}\nAperte enter para continuar.'.format(individual_bill(table[name])).encode('utf-8'))
                             servidor.rdt_rcv()['data']
+
 
                         case 'conta da mesa' | '4':
                             print("Enviando conta da mesa...")
@@ -206,6 +194,7 @@ def main():
                             print("Verificando se o pagamento foi efetuado...")
 
                             if (result):
+                                pagamentos[name] = True  # Adicione o nome do cliente à lista de pagamentos
                                 if (money > 0):
                                     responsePayment = f"Seu troco é R$ {money:.2f}\nDeseja confirmar o pagamento?\n"
                                 else:
@@ -223,6 +212,7 @@ def main():
                             else:
                                 servidor.rdt_send(f"Você ainda deve R$ {money:.2f}.\nAperte enter para continuar".encode('utf-8'))
                                 servidor.rdt_rcv()
+
         else:
             servidor.rdt_send('Seja bem vindo ao CINtofome!\nDigite "chefia" para iniciar o sistema'.encode('utf-8'))
 # ----------------------------------------------------- #
