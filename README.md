@@ -1,13 +1,3 @@
-## Equipe
-
-- José Daniel da Silva Carmo
-- Marcelo Vinícius Bastos Santos
-- Giovanny Lira de Araújo Cunha
-- João Pedro de Albuquerque Maranhão Marinho
-- Antônio Gabriel dos Santos Clemente
-
-# README
-
 ## CINtofome - Sistema de Pedidos de Restaurante
 
 CINtofome é um sistema simples de gerenciamento de pedidos de restaurante, implementado em Python. Ele permite que os clientes façam pedidos, consultem o cardápio, visualizem suas contas individuais e a conta da mesa, e efetuem o pagamento.
@@ -68,3 +58,11 @@ O projeto consiste em dois arquivos principais:
 2. O cliente se conecta ao servidor e inicia a interação.
 3. O cliente envia comandos para o servidor, que processa as solicitações e retorna os resultados.
 4. O cliente e o servidor continuam interagindo até que o cliente decida sair.
+
+## Equipe
+
+- José Daniel da Silva Carmo
+- Marcelo Vinícius Bastos Santos
+- Giovanny Lira de Araújo Cunha
+- João Pedro de Albuquerque Maranhão Marinho
+- Antônio Gabriel dos Santos Clemente
