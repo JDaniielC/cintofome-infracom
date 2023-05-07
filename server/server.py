@@ -1,94 +1,6 @@
 from rdt import *
+from func import *
 
-cardapioDict = {"churrasco misto": 45.00, "parmegiana": 20.00, "fil Mignon": 30,\
-             "risoto de camarão": 25, "salmão grelhado": 35, "feijoada": 18, \
-                "lasanha": 22, "picanha": 40, "espaguete à carbonara": 28, "pizza margherita": 25}
-
-mesas = {"1": {"Vítor Azevedo": ["parmegiana", 'feijoada'], "Felipe Maltez": ["lasanha", 'picanha']}}
-pagamentos = {}
-
-
-def individual_bill(pedidos):
-    total = 0
-    linha = "Conta individual:\n"
-    linha += "{:<20}{:>10}\n".format("Item", "Preço")
-    linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
-    for pedido in pedidos:
-        preco = cardapioDict.get(pedido)
-        if preco is not None:
-            linha += "{:<20}{:>10.2f}\n".format(pedido, preco)
-            total += preco
-
-    linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
-    linha += "Total - R$ {:,.2f}\n".format(total)
-    linha += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
-    return linha
-
-def table_bill(pedidos):
-    total_mesa = 0.0 # variável para armazenar o total da mesa
-    
-    saida = "Conta da mesa:\n\n"
-    for nome_cliente, lista_pedidos in pedidos.items():
-        saida += f"{nome_cliente}:\n"
-        saida += "{:<20}{:>10}\n".format("Item", "Preço")
-        saida += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
-        for pedido in lista_pedidos:
-            preco = cardapioDict.get(pedido)
-            if preco is not None:
-                saida += "{:<20}{:>10.2f}\n".format(pedido, preco)
-                total_mesa += preco
-        
-        saida += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
-    
-    # total da mesa
-    saida += "Total da mesa - R$ {:,.2f}\n".format(total_mesa)
-    saida += "-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n"
-    
-    return saida
-
-
-
-def bill_verify(valor, mesa, nome): 
-    total = 0
-    pedidos = mesa.get(nome)
-    if pedidos is not None:
-        for pedido in pedidos:
-            preco = cardapioDict.get(pedido)
-            if (preco is not None):
-                total += preco
-    if (valor >= total):
-        return valor - total, True
-    else:
-        return total - valor, False
-
-def save_request(mesa: dict, nome: str, pedido: str):
-    if (pedido.isdigit()):
-        if (int(pedido) in range(0, 10)):
-            pedido = cardapioPorExtenso[int(pedido)]
-    pedidos = mesa.get(nome)
-    pedidos.append(pedido)
-    print(f"Pedido {pedido} adicionado para {nome} na mesa.")
-
-def sum_bill(nome, mesa):
-    total_individual = 0.0
-    total_mesa = 0.0
-    for name, requests in mesa.items():
-        total_cliente = 0.0
-        for item in requests:
-            preco = cardapioDict.get(item)
-            if preco is not None:
-                total_cliente += preco
-
-        total_mesa += total_cliente
-    
-    pedidos = mesa.get(nome)
-    for pedido in pedidos:
-        preco = cardapioDict.get(pedido)
-        if preco is not None:
-            total_individual += preco
-    
-    return f"Sua conta foi R$ {total_individual:.2f} e a da mesa R$ {total_mesa:.2f}. Digite o valor que deseja pagar"
-                         
 def main():
     # Conexão foi abstraída para a classe Rdt
     servidor = Rdt('server')
@@ -97,6 +9,7 @@ def main():
     print('Conexão estabelecida com o cliente')
     servidor.reset_num_seq()
     while True:
+        print("Aguardando mensagem do novo cliente.")
         # Recebe uma mensagem do cliente
         clientMessage = servidor.rdt_rcv()['data']
 
@@ -137,15 +50,14 @@ def main():
                             print("Decidiu sair, verificando se pode sair...")
                             if name in pagamentos:  # Verifique se o cliente já pagou a conta
                                 servidor.rdt_send('Volte sempre ^^'.encode('utf-8'))
-                                mesas[tableNumber].update(table)
-                                clientMessage = servidor.rdt_rcv()['data']
+                                table.pop(name)
                                 break
                             else: 
-                                servidor.rdt_send('Você ainda não pagou sua conta.\nAperte enter para continuar'.encode('utf-8'))
+                                servidor.rdt_send('Você ainda não pagou sua conta.{}'.format(continueText).encode('utf-8'))
                                 clientMessage = servidor.rdt_rcv()['data']
                         case 'cardapio' | '1':
                             print("Enviando cardápio...")
-                            servidor.rdt_send(cardapio.encode('utf-8'))
+                            servidor.rdt_send("{}{}".format(cardapio, continueText).encode('utf-8'))
                             clientMessage = servidor.rdt_rcv()['data']
 
                         case 'pedido' | 'pedir' | '2':
@@ -168,13 +80,13 @@ def main():
 
                         case 'conta individual' | '3':
                             print("Enviando conta individual...")
-                            servidor.rdt_send('{}\nAperte enter para continuar.'.format(individual_bill(table[name])).encode('utf-8'))
+                            servidor.rdt_send('{}{}.'.format(individual_bill(table[name]), continueText).encode('utf-8'))
                             servidor.rdt_rcv()['data']
 
 
                         case 'conta da mesa' | '4':
                             print("Enviando conta da mesa...")
-                            servidor.rdt_send('{}\nAperte enter para continuar.'.format(table_bill(table)).encode('utf-8'))
+                            servidor.rdt_send('{}{}.'.format(table_bill(table), continueText).encode('utf-8'))
                             servidor.rdt_rcv()['data']
                         
                         case 'pagar' | '5':
@@ -204,52 +116,19 @@ def main():
                                 clientMessage = servidor.rdt_rcv()['data']
                                 confirm = clientMessage.decode('utf-8')
                                 if (confirm in negacoes):
-                                    servidor.rdt_send('Pagamento cancelado.\nAperte enter para continuar.'.encode('utf-8'))
+                                    servidor.rdt_send('Pagamento cancelado.{}.'.format(continueText).encode('utf-8'))
                                     servidor.rdt_rcv()
                                 else:
-                                    servidor.rdt_send('Você pagou sua conta, obrigado!\nAperte enter para continuar'.encode('utf-8'))
+                                    servidor.rdt_send('Você pagou sua conta, obrigado!{}'.format(continueText).encode('utf-8'))
+                                    table[name] = []
                                     servidor.rdt_rcv()
                             else:
-                                servidor.rdt_send(f" Não foi possível finalizar pagamento, pois ficou faltando : R$ {money:.2f}, refaça o pagamento, por gentileza.\nAperte enter para continuar".encode('utf-8'))
+                                servidor.rdt_send(f" Não foi possível finalizar pagamento, pois ficou faltando : R$ {money:.2f}, refaça o pagamento, por gentileza.{continueText}".encode('utf-8'))
                                 servidor.rdt_rcv()
 
         else:
             servidor.rdt_send('Seja bem vindo ao CINtofome!\nDigite "chefia" para iniciar o sistema'.encode('utf-8'))
-# ----------------------------------------------------- #
-#  Textos que serão enviados ao cliente ou verificações #
-# ----------------------------------------------------- #
 
-opcoes = "Digite uma das opções a seguir (o número ou por extenso):\n\
-        1 - cardápio\n\
-        2 - pedido\n\
-        3 - conta individual\n\
-        4 - conta da mesa\n\
-        5 - pagar\n\
-        6 - levantar\n"
-
-respostasPorExtenso = ['cardapio', 'pedido', 'conta individual', 'conta da mesa', 'sair', 'pedir', 'levantar', 'pagar']
-
-cardapio = "Cardápio do CINtofome:\n\n\
-            0 - Churrasco Misto: R$ 45,00\n\
-            1 - Parmegiana: R$ 20,00\n\
-            2 - Filé Mignon: R$ 30,00\n\
-            3 - Risoto de Camarão: R$ 25,00\n\
-            4 - Salmão Grelhado: R$ 35,00\n\
-            5 - Feijoada: R$ 18,00\n\
-            6 - Lasanha: R$ 22,00\n\
-            7 - Picanha: R$ 40,00\n\
-            8 - Espaguete à Carbonara: R$ 28,00\n\
-            9- Pizza Margherita: R$ 25,00\n"
-
-cardapioPorExtenso = ['churrasco misto', 'parmegiana', 'filé mignon',\
-                       'risoto de camarão', 'salmão grelhado', 'feijoada',\
-                        'lasanha', 'picanha', 'espaguete à carbonara', 'pizza margherita']
-
-negacoes = ['não', 'nao', 'n', 'no']
-
-# ----------------------------------------------------- #
-#  Textos que serão enviados ao cliente ou verificações #
-# ----------------------------------------------------- #
 
 if __name__ == '__main__':
     main()

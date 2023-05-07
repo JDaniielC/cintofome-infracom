@@ -10,7 +10,7 @@ def main():
 
     print("Conexão estabelecida com o servidor")
     serverMessage = b'' # Mensagem recebida do servidor
-    while (serverMessage.decode('utf-8') != "Volte sempre ^^"):
+    while (True):
         # Envia uma mensagem para o servidor
         clientMessage = input('{} Client: '.format(get_time()))
         client.rdt_send(clientMessage.encode('utf-8'))
@@ -18,10 +18,9 @@ def main():
         # Recebe uma mensagem do servidor
         serverMessage = client.rdt_rcv()['data']
         print('{} CINtofome: '.format(get_time()), serverMessage.decode('utf-8'))
-    
-    # Fecha a conexão
-    print("Conexão encerrada")   
+
+        if (serverMessage.decode('utf-8') == 'Volte sempre ^^'):
+            print("Levantou da mesa, envie 'chefia' para nova requisição.")
 
 if __name__ == '__main__':
-    while True:
-        main()
+    main()
