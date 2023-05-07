@@ -210,7 +210,7 @@ def main():
                                     servidor.rdt_send('Você pagou sua conta, obrigado!\nAperte enter para continuar'.encode('utf-8'))
                                     servidor.rdt_rcv()
                             else:
-                                servidor.rdt_send(f"Você ainda deve R$ {money:.2f}.\nAperte enter para continuar".encode('utf-8'))
+                                servidor.rdt_send(f" Não foi possível finalizar pagamento, pois ficou faltando : R$ {money:.2f}, refaça o pagamento, por gentileza.\nAperte enter para continuar".encode('utf-8'))
                                 servidor.rdt_rcv()
 
         else:
