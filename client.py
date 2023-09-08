@@ -48,8 +48,6 @@ def main():
     else:
         print("Crie o arquivo e põe no diretório do cliente!")
     
-    # Fecha a conexão:
-    Rdt.close()
 
 if __name__ == '__main__':
     while True:
